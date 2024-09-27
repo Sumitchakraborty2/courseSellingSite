@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const schema = mongoose.Schema;
 
-
-
 const userSchema = new schema({
     firstname: String,
     lastname: String,
@@ -44,9 +42,21 @@ const coursesSchema = new schema({
     imageUrl: {
         type: String
     },
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now()
+    },
     adminId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "adminModel"
+    },
+    contentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "courseContentModel"
     }
 })
 
@@ -59,19 +69,64 @@ const purchaseSchema = new schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "userModel"
     },
-
 })
+
+const contentSchema = new schema({
+    courseId: {
+        type: mongoose.Types.ObjectId,
+        ref: "courseModel",
+        required: true
+    },
+    validity: {
+        type: "string",
+        required: true
+    },
+    description: {
+        type: "string",
+        required: true
+    },
+    startDate: {
+        type: Date,
+        required: true
+    },
+    syllabusLink: {
+        type: "String",
+        required: true
+    },
+    modules: [{
+        title: {
+            type:"string",
+            required: true
+        },
+        topics: [{
+            title:{
+                type: "string",
+            }
+        }]
+    }],
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now()
+    }
+})
+
 
 
 const userModel = mongoose.model('user', userSchema);
 const adminModel = mongoose.model('admin', adminSchema);
 const courseModel = mongoose.model('course', coursesSchema);
 const purchaseModel = mongoose.model('purchase', purchaseSchema);
+const courseContentModel = mongoose.model('content',contentSchema);
 
 
 module.exports = {
     userModel,
     adminModel,
     courseModel,
-    purchaseModel
+    purchaseModel,
+    courseContentModel
 }

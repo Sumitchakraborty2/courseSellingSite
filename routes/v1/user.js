@@ -5,7 +5,7 @@ const userRouter = Router();
 
 // Import all required modules
 const {signUp_validation, signIn_validation} = require('../../validation/validation');
-const {userModel,courseModel, purchaseModel} = require('../../db');
+const {userModel,courseModel, purchaseModel, courseContentModel} = require('../../db');
 const {hash, verifyPassword} = require('../../hashing/user');
 const { authentication } = require('../../authentication/user');
 const { default: mongoose } = require('mongoose');
@@ -19,6 +19,15 @@ userRouter.post('/signUp', signUp_validation, hash, async (req, res) => {
         const {firstname, lastname, email} = req.userDetails
         const password = req.hashedPassword;
 
+        // check if user already present in database
+        const foundUser = await userModel.findOne({
+            email
+        })
+        if(foundUser) return res.status(400).json({
+            message: "User Already Exists"
+        })
+
+        // insert the data if user is not present in database
         await userModel.create({
             firstname: firstname,
             lastname: lastname,
@@ -71,7 +80,9 @@ userRouter.post('/signIn', signIn_validation, verifyPassword, async (req, res) =
     } catch(err) {
         // Handle any error that may occur
         console.error(`Error while checking credentials in database: ${err}`);
-        res.status(401).send("Invalid credentials");
+        res.status(500).json({
+            message: "signin failed"
+        });
     }
 
 })
@@ -93,7 +104,10 @@ userRouter.get('/courses', async (req, res) => {
         const purchases = await purchaseModel.find({
             userId: req.id
         })
-        
+        if(!purchases) return res.status(404).json({
+            message: "There are no purchases"
+        })
+        // By using promise.all you are ensuring that the promises are resolved before you try to access the results
         const courses = await Promise.all(
             purchases.map(async (purchase) => {{
                 return await courseModel.findById(purchase.courseId);
@@ -111,7 +125,9 @@ userRouter.get('/courses', async (req, res) => {
     } catch(error) {
         console.log(error);
         
-        res.status(500).json("Internal server Error")
+        res.status(500).json({
+            message: "Internal Server Error: failed to retrive the course"
+        })
     }
 
 })
@@ -151,7 +167,40 @@ userRouter.post('/courses/:courseId/purchase', async (req, res) => {
         }
         
         return res.status(500).json({
-            message: "Internal Server Error"
+            message: "Internal Server Error: purchase failed"
+        })
+    }
+})
+
+userRouter.get('/courses/:courseId/content', async(req, res) => {
+    try{
+
+        // find purchases
+        const foundPurchase = await purchaseModel.findOne({
+            userId: req.id,
+            courseId: req.params.courseId
+        })
+
+        if(!foundPurchase) return res.status(404).json({
+            message: "There is no purchase"
+        })
+
+        const foundContent = await courseContentModel.findOne({
+            courseId: foundPurchase.courseId
+        })
+        
+        if(foundContent) {
+            res.json(foundContent)
+        } else{
+            return res.status(404).json({
+                message: "content not found"
+            })
+        }
+    } catch(error) {
+        console.log(`details: ${error}`);
+        
+        return res.status(500).json({
+            message: "Internal Server Error: failed to retrive course content",
         })
     }
 })

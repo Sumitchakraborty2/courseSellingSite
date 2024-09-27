@@ -13,6 +13,7 @@ const titleSchema = z
 const descriptionSchema = z
     .string()
     .min(1, { message: "description is required" })
+    .max(500, {message: "description cannot exceed 500 characters"})
     .regex(/^[^{}\[\]()]+$/, "Description contains invalid characters");
 
 const priceSchema = z
@@ -21,7 +22,8 @@ const priceSchema = z
 
 const imageUrlSchema = z
     .string()
-    .url({ message: "Must be a valid URL" });
+    .url({ message: "Must be a valid URL" })
+    .nonempty("image url required")
 
 const coursesValidationSchema = z.object({
     title:  titleSchema,
@@ -46,11 +48,10 @@ function course_validation(req, res, next) {
         }
 
         return res.status(500).json({
-            message: `Internal server error`
+            message: `Internal server error: course validatio failed`
         })
 
     }
 }
-
 
 module.exports = course_validation;
