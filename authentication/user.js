@@ -9,6 +9,7 @@ function authentication(req, res, next) {
     if(!token) return res.status(403).json({
         message: "token not found"
     })
+    
 
     try{
         const payload = jwt.verify(token,JWT_SECRET);        
